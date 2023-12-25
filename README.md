@@ -15,7 +15,7 @@ and play it with [VideoLAN](https://www.videolan.org/vlc/) console player ([cvlc
 - `npm i`
 - `npm start`
 
-Alternatively you can use
+Alternatively you can use:
 ```
 npx /path/to/fuzzsoma
 ```
