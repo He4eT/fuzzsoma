@@ -6,7 +6,7 @@ inquirer.registerPrompt('search-list', require('inquirer-search-list'))
 
 const channelsUrl = 'https://somafm.com/channels.xml'
 
-const download = (url) =>
+const downloadChannelsXML = (url) =>
   fetch(url)
   .then((response) => {
     if (response.ok) {
@@ -16,29 +16,37 @@ const download = (url) =>
     }
   })
 
+const extractChannels = (json) =>
+  json.channels.channel
+
 const fuzzySelect = (choices) =>
   inquirer.prompt([{
     type: "search-list",
     message: "Select SomaFM channel",
     name: "channel",
     choices,
-    pageSize: 10,
   }])
 
-const playChannel = (channel) => {
+const sortChannels = (channels) =>
+  channels.sort((a, b) =>
+    b.listeners[0] - a.listeners[0]
+  )
+
+const shapeChannels = (channels) =>
+  channels.map((channel) => ({
+    name: `${channel.title[0]} — ${channel.description[0]}`,
+    value: channel.highestpls[0]['_'],
+  }))
+
+const playChannel = ({channel}) => {
   console.log(channel)
 }
 
-download(channelsUrl)
+downloadChannelsXML(channelsUrl)
   .then(xml2js.parseStringPromise)
-  .then((json) => json.channels.channel)
-  .then((channels) => channels.sort((a, b) =>
-    b.listeners[0] - a.listeners[0]))
-  .then((channels) => channels.map((channel) => ({
-    name: `${channel.title[0]} — ${channel.description[0]}`,
-    value: channel.highestpls[0]['_'],
-  })))
+  .then(extractChannels)
+  .then(sortChannels)
+  .then(shapeChannels)
   .then(fuzzySelect)
-  .then(({channel}) => channel)
   .then(playChannel)
   .catch((error) => console.error('Error:', error.message))
