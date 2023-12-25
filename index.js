@@ -1,7 +1,9 @@
 #!/usr/bin/env node
 
-const xml2js = require('xml2js')
 const inquirer = require('inquirer')
+const xml2js = require('xml2js')
+const { exec } = require('child_process');
+
 inquirer.registerPrompt('search-list', require('inquirer-search-list'))
 
 const channelsUrl = 'https://somafm.com/channels.xml'
@@ -22,7 +24,7 @@ const extractChannels = (json) =>
 const fuzzySelect = (choices) =>
   inquirer.prompt([{
     type: "search-list",
-    message: "Select SomaFM channel",
+    message: "SomaFM channel",
     name: "channel",
     choices,
   }])
@@ -38,9 +40,8 @@ const shapeChannels = (channels) =>
     value: channel.highestpls[0]['_'],
   }))
 
-const playChannel = ({channel}) => {
-  console.log(channel)
-}
+const playChannel = ({channel}) =>
+  exec(`cvlc ${channel}`)
 
 downloadChannelsXML(channelsUrl)
   .then(xml2js.parseStringPromise)
