@@ -36,7 +36,7 @@ const shapeChannels = (channels) =>
 const fuzzySelect = (choices) =>
   inquirer.prompt([{
     choices,
-    message: 'SomaFM channel',
+    message: 'SomaFM Channel:',
     name: 'channelURL',
     type: 'search-list',
   }])
