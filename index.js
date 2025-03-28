@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 
+const { exec } = require('child_process')
 const inquirer = require('inquirer')
+const inquirerSearchList = require('inquirer-search-list')
 const xml2js = require('xml2js')
-const { exec } = require('child_process');
 
 const CHANNELS_XML_URL = 'https://somafm.com/channels.xml'
 
@@ -12,27 +13,19 @@ const downloadChannelsXML = (url) =>
     if (response.ok) {
       return response.text()
     } else {
-      throw new Error(`Failed to download XML. Status: ${response.status} ${response.statusText}`)
+      throw new Error([
+        'Failed to download XML:',
+        response.status,
+        response.statusText,
+      ].join(' '))
     }
   })
 
 const extractChannels = (json) =>
   json.channels.channel
 
-const fuzzySelect = (choices) => {
-  inquirer.registerPrompt('search-list', require('inquirer-search-list'))
-  return inquirer.prompt([{
-    type: "search-list",
-    message: "SomaFM channel",
-    name: "channel",
-    choices,
-  }])
-}
-
 const sortChannels = (channels) =>
-  channels.sort((a, b) =>
-    b.listeners[0] - a.listeners[0]
-  )
+  channels.sort((a, b) => b.listeners[0] - a.listeners[0])
 
 const shapeChannels = (channels) =>
   channels.map((channel) => ({
@@ -40,8 +33,20 @@ const shapeChannels = (channels) =>
     value: channel.highestpls[0]['_'],
   }))
 
-const playChannel = ({channel}) =>
-  exec(`cvlc ${channel}`)
+const fuzzySelect = (choices) =>
+  inquirer.prompt([{
+    choices,
+    message: 'SomaFM channel',
+    name: 'channelURL',
+    type: 'search-list',
+  }])
+
+const playChannel = ({channelURL}) =>
+  exec(`cvlc ${channelURL}`)
+
+/* */
+
+inquirer.registerPrompt('search-list', inquirerSearchList)
 
 downloadChannelsXML(CHANNELS_XML_URL)
   .then(xml2js.parseStringPromise)
@@ -50,4 +55,4 @@ downloadChannelsXML(CHANNELS_XML_URL)
   .then(shapeChannels)
   .then(fuzzySelect)
   .then(playChannel)
-  .catch((error) => console.error('Error:', error.message))
+  .catch((error) => console.error('[Error]', error.message))
